@@ -1,0 +1,16 @@
+from selenium import webdriver
+
+# Configurar el navegador (descarga el controlador adecuado para tu navegador)
+driver = webdriver.Chrome(executable_path="C:\Program Files\Google\Chrome\Application")
+
+# Abrir Photopea
+driver.get("https://www.photopea.com/")
+
+# Cargar una imagen
+input_file = driver.find_element_by_css_selector("input[type='file']")
+input_file.send_keys(r"C:\Users\ASUS\Pictures\Perfil.jpg")
+
+# Continuar con la edición (por ejemplo, ajustar el brillo)
+
+# Cierra el navegador cuando hayas terminado
+driver.quit()
