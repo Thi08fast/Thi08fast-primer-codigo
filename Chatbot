@@ -1,0 +1,93 @@
+#pip install numpy scikit-learn
+
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import re
+import unicodedata
+
+class Chatbot:
+    def __init__(self):
+        # Base de conocimiento
+        self.knowledge_base = {
+            # DNIT
+            "¿Qué es el DNIT?": "El DNIT (Dirección Nacional de Innovación y Tecnología) es una institución paraguaya que promueve la innovación y tecnología.",
+            "¿Cuáles son los requisitos para obtener usuario del DNIT?": "Para obtener usuario del DNIT necesitas: 1) Cédula de Identidad, 2) Correo electrónico válido, 3) Completar el formulario de registro.",
+            
+            # EAS MIC
+            "¿Qué es el EAS?": "El EAS (Especialista en Atención y Servicios) es un sistema del Ministerio de Industria y Comercio para facilitar trámites.",
+            "¿Cómo registro una empresa en el MIC?": "Para registrar una empresa en el MIC debes: 1) Ingresar a la plataforma EAS, 2) Completar el formulario de registro, 3) Adjuntar documentación requerida.",
+            
+            # IPS
+            "¿Cómo consulto mi aporte al IPS?": "Puedes consultar tus aportes al IPS a través del portal web oficial, ingresando con tu número de cédula y contraseña.",
+            "¿Qué servicios ofrece el IPS?": "El IPS ofrece: seguro médico, jubilaciones, pensiones, subsidios por enfermedad y maternidad.",
+            
+            # Base Legal
+            "¿Qué es Base Legal?": "Base Legal es una plataforma de consulta jurídica paraguaya que proporciona información legal actualizada.",
+            "¿Cómo busco leyes en Base Legal?": "En Base Legal puedes buscar leyes usando palabras clave, números de ley o temas específicos en su buscador."
+        }
+        
+        # Preprocesar la base de conocimiento
+        self.preprocess_knowledge()
+        
+    def preprocess_knowledge(self):
+        # Crear vectorizador TF-IDF
+        self.vectorizer = TfidfVectorizer(lowercase=True)
+        
+        # Preparar preguntas y respuestas
+        self.questions = list(self.knowledge_base.keys())
+        self.answers = list(self.knowledge_base.values())
+        
+        # Vectorizar preguntas
+        self.question_vectors = self.vectorizer.fit_transform(self.questions)
+    
+    def normalize_text(self, text):
+        # Eliminar acentos
+        text = ''.join(c for c in unicodedata.normalize('NFD', text)
+                      if unicodedata.category(c) != 'Mn')
+        # Convertir a minúsculas
+        text = text.lower()
+        # Eliminar caracteres especiales
+        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+        return text
+    
+    def get_response(self, user_input):
+        # Normalizar input del usuario
+        normalized_input = self.normalize_text(user_input)
+        
+        # Vectorizar la pregunta del usuario
+        user_vector = self.vectorizer.transform([normalized_input])
+        
+        # Calcular similitud con todas las preguntas
+        similarities = cosine_similarity(user_vector, self.question_vectors)[0]
+        
+        # Encontrar la pregunta más similar
+        max_similarity = np.max(similarities)
+        most_similar_idx = np.argmax(similarities)
+        
+        # Si la similitud es muy baja, responder que no se entiende la pregunta
+        if max_similarity < 0.3:
+            return ("Lo siento, no entiendo tu pregunta. ¿Podrías reformularla? "
+                   "Puedo ayudarte con información sobre DNIT, EAS-MIC, IPS o Base Legal.")
+        
+        # Devolver la respuesta correspondiente
+        return self.answers[most_similar_idx]
+    
+    def start_chat(self):
+        print("¡Hola! Soy un chatbot especializado en DNIT, EAS-MIC, IPS y Base Legal.")
+        print("Puedes preguntarme sobre estos servicios. Escribe 'salir' para terminar.")
+        
+        while True:
+            user_input = input("\nTú: ")
+            
+            if user_input.lower() in ['salir', 'exit', 'quit']:
+                print("¡Hasta luego! Que tengas un buen día.")
+                break
+                
+            response = self.get_response(user_input)
+            print(f"\nChatbot: {response}")
+
+# Crear y ejecutar el chatbot
+if __name__ == "__main__":
+    chatbot = Chatbot()
+    chatbot.start_chat()
