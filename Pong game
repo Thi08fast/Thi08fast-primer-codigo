@@ -1,0 +1,109 @@
+import pygame
+import random
+
+# Initialize the pygame library
+pygame.init()
+
+# Set up the display
+WIDTH, HEIGHT = 1920, 1080
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pong Game")
+
+# Colors
+WHITE = (255, 0, 0)
+BLACK = (0, 0, 0)
+
+# Game variables
+ball_speed_x = 10 * random.choice((1, -1))
+ball_speed_y = 10 * random.choice((1, -1))
+ball_radius = 15
+paddle_width, paddle_height = 15, 100
+paddle_speed = 15
+
+# Paddle positions
+paddle_a_x = 20
+paddle_a_y = HEIGHT // 2 - paddle_height // 2
+paddle_b_x = WIDTH - 40
+paddle_b_y = HEIGHT // 2 - paddle_height // 2
+
+# Ball position
+ball_x = WIDTH // 2
+ball_y = HEIGHT // 2
+
+# Set up fonts for scoring
+font = pygame.font.SysFont('Arial', 30)
+
+# Score
+score_a = 0
+score_b = 0
+
+# Main game loop
+running = True
+while running:
+    screen.fill(BLACK)
+
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Paddle movement
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w] and paddle_a_y > 0:
+        paddle_a_y -= paddle_speed
+    if keys[pygame.K_s] and paddle_a_y < HEIGHT - paddle_height:
+        paddle_a_y += paddle_speed
+    if keys[pygame.K_UP] and paddle_b_y > 0:
+        paddle_b_y -= paddle_speed
+    if keys[pygame.K_DOWN] and paddle_b_y < HEIGHT - paddle_height:
+        paddle_b_y += paddle_speed
+
+    # Ball movement
+    ball_x += ball_speed_x
+    ball_y += ball_speed_y
+
+    # Ball collision with top and bottom walls
+    if ball_y <= 0 or ball_y >= HEIGHT - ball_radius:
+        ball_speed_y *= -1
+
+    # Ball collision with paddles
+    if ball_x <= paddle_a_x + paddle_width and paddle_a_y <= ball_y <= paddle_a_y + paddle_height:
+        ball_speed_x *= -1
+        ball_speed_y = random.choice((-1, 1)) * random.randint(3, 5)
+
+    if ball_x >= paddle_b_x - paddle_width and paddle_b_y <= ball_y <= paddle_b_y + paddle_height:
+        ball_speed_x *= -1
+        ball_speed_y = random.choice((-1, 1)) * random.randint(3, 5)
+
+    # Ball out of bounds (scoring)
+    if ball_x <= 0:
+        score_b += 1
+        ball_x = WIDTH // 2
+        ball_y = HEIGHT // 2
+        ball_speed_x *= random.choice((1, -1))
+        ball_speed_y *= random.choice((1, -1))
+
+    if ball_x >= WIDTH:
+        score_a += 1
+        ball_x = WIDTH // 2
+        ball_y = HEIGHT // 2
+        ball_speed_x *= random.choice((1, -1))
+        ball_speed_y *= random.choice((1, -1))
+
+    # Draw paddles and ball
+    pygame.draw.rect(screen, WHITE, (paddle_a_x, paddle_a_y, paddle_width, paddle_height))
+    pygame.draw.rect(screen, WHITE, (paddle_b_x, paddle_b_y, paddle_width, paddle_height))
+    pygame.draw.circle(screen, WHITE, (ball_x, ball_y), ball_radius)
+
+    # Draw the scores
+    score_text = font.render(f"{score_a} - {score_b}", True, WHITE)
+    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 20))
+
+    # Update the display
+    pygame.display.flip()
+
+    # Set the frame rate
+    pygame.time.Clock().tick(144)
+
+# Quit pygame
+pygame.quit()
